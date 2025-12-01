@@ -75,6 +75,7 @@ class AnimatedSearchViewer(BaseViewer):
         self.problem = problem
         self.solution_cost = 0.0
         self.current_cost = 0.0
+        self.solution_actions = []  # List of actions in the solution path
 
         # Find initial and goal positions
         for y in range(len(self.map_grid)):
@@ -88,7 +89,7 @@ class AnimatedSearchViewer(BaseViewer):
         pygame.init()
         width = len(self.map_grid[0]) * TILE_SIZE
         # Add extra space for info panel (expanded for more stats)
-        height = len(self.map_grid) * TILE_SIZE + 150
+        height = len(self.map_grid) * TILE_SIZE + 180
         self.screen = pygame.display.set_mode((width, height))
         self.map_height = len(self.map_grid) * TILE_SIZE
         pygame.display.set_caption("BFS Search Visualization")
@@ -109,7 +110,7 @@ class AnimatedSearchViewer(BaseViewer):
     def draw_info_panel(self):
         """Draw information panel below the map"""
         # Draw background for info panel
-        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 150)
+        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 180)
         pygame.draw.rect(self.screen, (40, 40, 40), info_rect)
 
         # Calculate solution length first (needed for display logic)
@@ -159,11 +160,22 @@ class AnimatedSearchViewer(BaseViewer):
             length_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
             self.screen.blit(length_text, (10, y_offset + 75))
 
+            # Display solution path (actions)
+            if self.solution_actions:
+                # Create a compact representation
+                path_str = " > ".join(self.solution_actions)
+                # Truncate if too long (max ~50 characters)
+                if len(path_str) > 50:
+                    path_str = path_str[:47] + "..."
+
+                path_text = self.font.render(f"Camino: {path_str}", True, (100, 255, 150))
+                self.screen.blit(path_text, (10, y_offset + 100))
+
         # Goal position (moved down)
         if self.goal_pos:
             goal_text = self.font.render(f"Objetivo: {self.goal_pos}", True, (200, 200, 200))
             self.screen.blit(goal_text, (250, y_offset + 50))
-        
+
         # Initial position
         if self.initial_pos:
             init_text = self.font.render(f"Inicial: {self.initial_pos}", True, (200, 200, 200))
@@ -253,16 +265,22 @@ class AnimatedSearchViewer(BaseViewer):
         """Show the final path and calculate cost"""
         self.path = path
 
-        # Calculate solution cost if problem is available
+        # Calculate solution cost and extract actions if problem is available
         if self.problem and result:
             origin_state = self.problem.initial_state
             total_cost = 0.0
+            self.solution_actions = []
+
             for action, ending_state in result.path():
                 if action is not None:
                     total_cost += self.problem.cost(origin_state, action, ending_state)
+                    self.solution_actions.append(action)
                     origin_state = ending_state
+
             self.solution_cost = total_cost
             print(f"Solution path calculated: Length={len(path)}, Cost={self.solution_cost:.2f}")
+            print(f"Actions list: {self.solution_actions}")
+            print(f"Actions joined: {' → '.join(self.solution_actions)}")
         else:
             print(f"Warning: Cannot calculate cost - problem={self.problem}, result={result}")
 
