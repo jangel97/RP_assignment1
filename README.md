@@ -51,31 +51,87 @@ Evaluate influence on efficiency compared to UCS.
 
 ---
 
-## **WebViewer Visualization**
+## **Visualization Options**
 
-The project includes the ability to visualize the search tree using **WebViewer**, which displays expanded nodes, frontier evolution, and path structure in a local browser window.
+### **Animated Pygame Visualization (Default)**
 
-To enable it, replace the viewer argument in the script:
+The project includes a real-time animated visualization using **pygame** that shows the robot moving through the map as the search algorithm explores nodes. This visualization provides an intuitive way to understand how different search algorithms work.
 
-```python
-used_viewer = WebViewer()
-```
+#### **Features**
 
-### **Run the script locally**
+- **Real-time visualization**: Watch the robot explore the map step by step
+- **Color-coded cells**:
+  - **Dark gray**: Walls (#)
+  - **Light blue**: Visited/explored cells
+  - **Yellow**: Current position being explored
+  - **Green**: Final solution path (shown after completion)
+- **Live statistics panel** showing:
+  - **Exploring**: Current position coordinates (x, y)
+  - **Time**: Elapsed search time in seconds
+  - **Nodos expandidos**: Number of expanded nodes (iterations)
+  - **Nodos visitados**: Number of visited nodes
+  - **Tamaño máximo de lista**: Maximum frontier/fringe size
+  - **Longitud solución**: Solution path length (after completion)
+  - **Coste solución**: Total solution cost (after completion)
+  - **Objetivo**: Goal position coordinates
+
+#### **How to Use**
+
+By default, the animated visualization is **enabled**. Simply run:
 
 ```bash
 python3 scripts/Cuaderno_actividad_1_Búsqueda_v3.py
 ```
 
-### **Requirements**
+The visualization will:
+1. Show each step of the algorithm with a 300ms delay
+2. Display the final solution path in green
+3. Wait for you to press **ESC** to close the window
 
-Install dependencies from:
+#### **Customization**
 
+You can adjust the animation speed by changing the `delay_ms` parameter in the script:
+
+```python
+used_viewer = AnimatedSearchViewer(MAP, delay_ms=300, problem=problem)
 ```
-python3 scripts/requirements.txt
+
+Lower values = faster animation, higher values = slower animation.
+
+To **disable** the animation and use console output only:
+
+```python
+main(MAP_ASCII, COSTS, algorithms, use_animation=False)
+```
+
+---
+
+### **WebViewer Visualization**
+
+The project also supports **WebViewer**, which displays the search tree structure, expanded nodes, and frontier evolution in a local browser window.
+
+To enable it, set `use_animation=False` and modify the viewer in the script:
+
+```python
+used_viewer = WebViewer()
 ```
 
 WebViewer requires local execution and will not work in Google Colab.
+
+---
+
+## **Requirements**
+
+Install all dependencies:
+
+```bash
+pip install -r utils/requirements.txt
+```
+
+Required packages:
+- `simpleai` - Search algorithms
+- `pygame` - Animated visualization
+- `flask` - WebViewer (optional)
 
 ---
 

@@ -157,7 +157,7 @@ def main(MAP_ASCII,COSTS,algorithms,heuristic_number=1,use_animation=True):
       problem = GameWalkPuzzle(MAP,COSTS,heuristic_number)
 
       if use_animation:
-          used_viewer = AnimatedSearchViewer(MAP, delay_ms=300)
+          used_viewer = AnimatedSearchViewer(MAP, delay_ms=300, problem=problem)
       else:
           used_viewer = WebViewer()
       # Probad también ConsoleViewer para depurar
@@ -171,7 +171,7 @@ def main(MAP_ASCII,COSTS,algorithms,heuristic_number=1,use_animation=True):
       # Show the final path in the animation
       if use_animation and result:
           path = [x[1] for x in result.path()]
-          used_viewer.set_path(path)
+          used_viewer.set_path(path, result)
 
       resultado_experimento(problem,MAP,result,used_viewer)
 

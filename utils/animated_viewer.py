@@ -21,7 +21,7 @@ SPRITES = {
 class AnimatedSearchViewer(BaseViewer):
     """Pygame viewer that shows the robot moving through the map during search"""
 
-    def __init__(self, map_grid, delay_ms=200):
+    def __init__(self, map_grid, delay_ms=200, problem=None):
         super().__init__()
         self.map_grid = map_grid
         self.delay_ms = delay_ms
@@ -34,6 +34,8 @@ class AnimatedSearchViewer(BaseViewer):
         self.current_action = "Initializing"
         self.start_time = None
         self.elapsed_time = 0.0
+        self.problem = problem
+        self.solution_cost = 0.0
 
         # Find initial and goal positions
         for y in range(len(self.map_grid)):
@@ -46,8 +48,8 @@ class AnimatedSearchViewer(BaseViewer):
         # Initialize pygame
         pygame.init()
         width = len(self.map_grid[0]) * TILE_SIZE
-        # Add extra space for info panel
-        height = len(self.map_grid) * TILE_SIZE + 100
+        # Add extra space for info panel (expanded for more stats)
+        height = len(self.map_grid) * TILE_SIZE + 150
         self.screen = pygame.display.set_mode((width, height))
         self.map_height = len(self.map_grid) * TILE_SIZE
         pygame.display.set_caption("BFS Search Visualization")
@@ -68,7 +70,7 @@ class AnimatedSearchViewer(BaseViewer):
     def draw_info_panel(self):
         """Draw information panel below the map"""
         # Draw background for info panel
-        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 100)
+        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 150)
         pygame.draw.rect(self.screen, (40, 40, 40), info_rect)
 
         # Display current position
@@ -76,26 +78,46 @@ class AnimatedSearchViewer(BaseViewer):
             pos_text = self.font_large.render(f"Exploring: {self.current_pos}", True, (255, 255, 100))
             self.screen.blit(pos_text, (10, self.map_height + 10))
 
+        # Display timer
+        timer_text = self.font.render(f"Time: {self.elapsed_time:.2f}s", True, (255, 200, 100))
+        self.screen.blit(timer_text, (250, self.map_height + 15))
+
         # Use built-in stats from BaseViewer
         iterations = self.stats.get('iterations', 0)
         visited_count = max(len(self.visited), self.stats.get('visited', 0))
+        max_fringe = self.stats.get('max_fringe_size', 0)
 
-        # Display timer
-        timer_text = self.font.render(f"Time: {self.elapsed_time:.2f}s", True, (255, 200, 100))
-        self.screen.blit(timer_text, (250, self.map_height + 10))
+        # Solution stats (shown after path is found)
+        solution_length = len(self.path) if self.path else 0
 
-        # Display iterations
-        iter_text = self.font.render(f"Iterations: {iterations}", True, (180, 220, 255))
-        self.screen.blit(iter_text, (10, self.map_height + 45))
+        # Left column stats
+        y_offset = self.map_height + 50
 
-        # Display visited count
-        visited_text = self.font.render(f"Visited: {visited_count}", True, (180, 220, 255))
-        self.screen.blit(visited_text, (10, self.map_height + 70))
+        # Nodos expandidos
+        expanded_text = self.font.render(f"Nodos expandidos: {iterations}", True, (180, 220, 255))
+        self.screen.blit(expanded_text, (10, y_offset))
 
-        # Display goal position
+        # Visited
+        visited_text = self.font.render(f"Nodos visitados: {visited_count}", True, (180, 220, 255))
+        self.screen.blit(visited_text, (10, y_offset + 25))
+
+        # Tamaño máximo de lista
+        max_list_text = self.font.render(f"Tamaño máximo de lista: {max_fringe}", True, (180, 220, 255))
+        self.screen.blit(max_list_text, (10, y_offset + 50))
+
+        # Longitud de solución
+        if solution_length > 0:
+            solution_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
+            self.screen.blit(solution_text, (10, y_offset + 75))
+
+            # Coste de solución
+            cost_text = self.font.render(f"Coste solución: {self.solution_cost:.2f}", True, (100, 255, 150))
+            self.screen.blit(cost_text, (10, y_offset + 100))
+
+        # Goal position (moved down)
         if self.goal_pos:
-            goal_text = self.font.render(f"Goal: {self.goal_pos}", True, (100, 255, 150))
-            self.screen.blit(goal_text, (250, self.map_height + 45))
+            goal_text = self.font.render(f"Objetivo: {self.goal_pos}", True, (200, 200, 200))
+            self.screen.blit(goal_text, (250, y_offset + 50))
 
     def draw_map(self):
         """Draw the current state of the map"""
@@ -172,21 +194,32 @@ class AnimatedSearchViewer(BaseViewer):
                 print(f"  -> Exploring state: {state}")
                 self.update_display()
 
-    def set_path(self, path):
-        """Show the final path"""
+    def set_path(self, path, result=None):
+        """Show the final path and calculate cost"""
         self.path = path
+
+        # Calculate solution cost if problem is available
+        if self.problem and result:
+            origin_state = self.problem.initial_state
+            total_cost = 0.0
+            for action, ending_state in result.path():
+                if action is not None:
+                    total_cost += self.problem.cost(origin_state, action, ending_state)
+                    origin_state = ending_state
+            self.solution_cost = total_cost
+
         self.update_display()
         # Keep window open longer to see the final result
         pygame.time.delay(2000)
 
     def close(self):
         """Close the pygame window"""
-        print("Press any key to close the visualization window...")
+        print("Press ESC to close the visualization window...")
         waiting = True
         while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     waiting = False
-                if event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     waiting = False
         pygame.quit()
