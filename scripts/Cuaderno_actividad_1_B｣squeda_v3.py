@@ -35,7 +35,8 @@ from simpleai.search.viewers import BaseViewer,ConsoleViewer,WebViewer
 from simpleai.search import SearchProblem, astar, breadth_first, depth_first, uniform_cost
 from utils.animated_viewer import AnimatedSearchViewer
 
-
+# SETTINGS
+RANDOM_MAP=True
 
 class GameWalkPuzzle(SearchProblem):
 
@@ -183,7 +184,7 @@ def main(MAP_ASCII,COSTS,algorithms,heuristic_number=1,use_animation=True):
 
 # Mapa para todos los casos
 
-MAP_ASCII = """
+DEFAULT_MAP_ASCII = """
 #########
 # P     #
 # # ##  #
@@ -192,6 +193,9 @@ MAP_ASCII = """
 #       #
 #########
 """
+
+from utils.random_map import generate_random_map
+
 
 # Configuración y llamada para el caso 1
 # Se ejecutan los algoritmos de búsqueda en amplitud y búsqueda en profundidad
@@ -205,6 +209,8 @@ COSTS = {
 
 #algorithms=(breadth_first,depth_first)
 algorithms=(breadth_first,)
+
+MAP_ASCII = generate_random_map(width=9, height=7, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
 
 main (MAP_ASCII,COSTS,algorithms)
 

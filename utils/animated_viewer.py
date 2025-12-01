@@ -1,3 +1,41 @@
+"""
+Animated Pygame Viewer for Search Algorithms
+
+This module provides real-time visualization of search algorithms (BFS, DFS, A*, etc.)
+using pygame to show how the robot explores the map step by step.
+
+## Architecture
+
+The visualization uses an EVENT-DRIVEN architecture based on the observer pattern:
+
+1. **Initialization**:
+   - The map is stored ONCE in memory when the viewer is created
+   - Initial and goal positions are identified
+   - Pygame window is initialized
+
+2. **During Search Execution**:
+   - The search algorithm (from simpleai) calls `viewer.event()` at key moments
+   - Events include: 'new_node', 'chosen_node', 'new_iteration', etc.
+   - Each event contains only the NODE STATE (coordinates), NOT the entire map
+
+3. **What Gets Sent Per Move**:
+   - Only state coordinates (x, y) are passed with each event
+   - The viewer maintains the original map and tracks visited positions
+   - Very efficient - no redundant data transmission
+
+4. **Rendering Process**:
+   - On each event, the viewer updates its internal state (current_pos, visited set)
+   - Redraws the ENTIRE map using the stored map + current state
+   - Color-codes cells based on: visited, current, path, walls
+   - Displays live statistics in the info panel
+
+## Data Flow
+
+simpleai algorithm → event(name, node) → viewer updates state → redraw map → pygame display
+
+The map stays in memory, only position updates flow through the system.
+"""
+
 import pygame
 import sys
 import time
@@ -36,6 +74,7 @@ class AnimatedSearchViewer(BaseViewer):
         self.elapsed_time = 0.0
         self.problem = problem
         self.solution_cost = 0.0
+        self.current_cost = 0.0
 
         # Find initial and goal positions
         for y in range(len(self.map_grid)):
@@ -44,7 +83,7 @@ class AnimatedSearchViewer(BaseViewer):
                     self.initial_pos = (x, y)
                 elif self.map_grid[y][x].lower() == "p":
                     self.goal_pos = (x, y)
-
+        time.sleep(2)
         # Initialize pygame
         pygame.init()
         width = len(self.map_grid[0]) * TILE_SIZE
@@ -73,6 +112,9 @@ class AnimatedSearchViewer(BaseViewer):
         info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 150)
         pygame.draw.rect(self.screen, (40, 40, 40), info_rect)
 
+        # Calculate solution length first (needed for display logic)
+        solution_length = len(self.path) if self.path else 0
+
         # Display current position
         if self.current_pos:
             pos_text = self.font_large.render(f"Exploring: {self.current_pos}", True, (255, 255, 100))
@@ -82,13 +124,20 @@ class AnimatedSearchViewer(BaseViewer):
         timer_text = self.font.render(f"Time: {self.elapsed_time:.2f}s", True, (255, 200, 100))
         self.screen.blit(timer_text, (250, self.map_height + 15))
 
+        # Display cost (right side, below timer)
+        if solution_length > 0:
+            # Final solution cost (green)
+            cost_text = self.font.render(f"Coste: {self.solution_cost:.2f}", True, (100, 255, 150))
+            self.screen.blit(cost_text, (250, self.map_height + 40))
+        elif self.current_cost > 0:
+            # Current exploration cost (orange)
+            cost_text = self.font.render(f"Current Cost: {self.current_cost:.2f}", True, (255, 200, 100))
+            self.screen.blit(cost_text, (250, self.map_height + 40))
+
         # Use built-in stats from BaseViewer
         iterations = self.stats.get('iterations', 0)
         visited_count = max(len(self.visited), self.stats.get('visited', 0))
         max_fringe = self.stats.get('max_fringe_size', 0)
-
-        # Solution stats (shown after path is found)
-        solution_length = len(self.path) if self.path else 0
 
         # Left column stats
         y_offset = self.map_height + 50
@@ -105,14 +154,10 @@ class AnimatedSearchViewer(BaseViewer):
         max_list_text = self.font.render(f"Tamaño máximo de lista: {max_fringe}", True, (180, 220, 255))
         self.screen.blit(max_list_text, (10, y_offset + 50))
 
-        # Longitud de solución
+        # Solution stats (shown when path is found)
         if solution_length > 0:
-            solution_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
-            self.screen.blit(solution_text, (10, y_offset + 75))
-
-            # Coste de solución
-            cost_text = self.font.render(f"Coste solución: {self.solution_cost:.2f}", True, (100, 255, 150))
-            self.screen.blit(cost_text, (10, y_offset + 100))
+            length_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
+            self.screen.blit(length_text, (10, y_offset + 75))
 
         # Goal position (moved down)
         if self.goal_pos:
@@ -191,7 +236,12 @@ class AnimatedSearchViewer(BaseViewer):
             if name == 'new_node' or name == 'chosen_node':
                 # Update current position for any node being processed
                 self.current_pos = state
-                print(f"  -> Exploring state: {state}")
+
+                # Update current cost if available
+                if hasattr(node, 'cost'):
+                    self.current_cost = node.cost
+
+                print(f"  -> Exploring state: {state}, Cost: {self.current_cost:.2f}")
                 self.update_display()
 
     def set_path(self, path, result=None):
@@ -207,6 +257,9 @@ class AnimatedSearchViewer(BaseViewer):
                     total_cost += self.problem.cost(origin_state, action, ending_state)
                     origin_state = ending_state
             self.solution_cost = total_cost
+            print(f"Solution path calculated: Length={len(path)}, Cost={self.solution_cost:.2f}")
+        else:
+            print(f"Warning: Cannot calculate cost - problem={self.problem}, result={result}")
 
         self.update_display()
         # Keep window open longer to see the final result
