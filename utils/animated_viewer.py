@@ -117,11 +117,11 @@ class AnimatedSearchViewer(BaseViewer):
 
         # Display current position
         if self.current_pos:
-            pos_text = self.font_large.render(f"Exploring: {self.current_pos}", True, (255, 255, 100))
+            pos_text = self.font_large.render(f"Explorando: {self.current_pos}", True, (255, 255, 100))
             self.screen.blit(pos_text, (10, self.map_height + 10))
 
         # Display timer
-        timer_text = self.font.render(f"Time: {self.elapsed_time:.2f}s", True, (255, 200, 100))
+        timer_text = self.font.render(f"Tiempo: {self.elapsed_time:.2f}s", True, (255, 200, 100))
         self.screen.blit(timer_text, (250, self.map_height + 15))
 
         # Display cost (right side, below timer)
@@ -131,7 +131,7 @@ class AnimatedSearchViewer(BaseViewer):
             self.screen.blit(cost_text, (250, self.map_height + 40))
         elif self.current_cost > 0:
             # Current exploration cost (orange)
-            cost_text = self.font.render(f"Current Cost: {self.current_cost:.2f}", True, (255, 200, 100))
+            cost_text = self.font.render(f"Coste Actual: {self.current_cost:.2f}", True, (255, 200, 100))
             self.screen.blit(cost_text, (250, self.map_height + 40))
 
         # Use built-in stats from BaseViewer
@@ -163,6 +163,11 @@ class AnimatedSearchViewer(BaseViewer):
         if self.goal_pos:
             goal_text = self.font.render(f"Objetivo: {self.goal_pos}", True, (200, 200, 200))
             self.screen.blit(goal_text, (250, y_offset + 50))
+        
+        # Initial position
+        if self.initial_pos:
+            init_text = self.font.render(f"Inicial: {self.initial_pos}", True, (200, 200, 200))
+            self.screen.blit(init_text, (250, y_offset + 75))
 
     def draw_map(self):
         """Draw the current state of the map"""
