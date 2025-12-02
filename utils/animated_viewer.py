@@ -220,16 +220,20 @@ class AnimatedSearchViewer(BaseViewer):
                 first_line = lines[0]
                 if len(lines) == 1 and truncated:
                     first_line += " ..."
-                coord_text = self.font_medium.render(f"Ruta: {first_line}", True, (100, 255, 150))
+                label = "Ruta: "
+                coord_text = self.font_medium.render(f"{label}{first_line}", True, (100, 255, 150))
                 self.screen.blit(coord_text, (10, y_offset + 125))
 
-                # Render additional lines (indented)
+                # Calculate indent to align with first coordinate (after "Ruta: ")
+                label_width = self.font_medium.size(label)[0]
+
+                # Render additional lines (aligned with first line coordinates)
                 for idx, line in enumerate(lines[1:], start=1):
                     # Add ellipsis if this is the last line and there's more
                     if idx == len(lines) - 1 and truncated:
                         line += " ..."
-                    coord_text = self.font_medium.render(f"      {line}", True, (100, 255, 150))
-                    self.screen.blit(coord_text, (10, y_offset + 125 + idx * 22))
+                    coord_text = self.font_medium.render(line, True, (100, 255, 150))
+                    self.screen.blit(coord_text, (10 + label_width, y_offset + 125 + idx * 22))
 
     def draw_map(self):
         """Draw the current state of the map"""
