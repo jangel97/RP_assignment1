@@ -37,7 +37,7 @@ from utils.animated_viewer import AnimatedSearchViewer
 from utils.random_map import generate_random_map
 
 # SETTINGS
-RANDOM_MAP=False
+RANDOM_MAP=True
 
 class GameWalkPuzzle(SearchProblem):
 
@@ -159,7 +159,7 @@ def main(MAP_ASCII,COSTS,algorithms,heuristic_number=1,use_animation=True):
       problem = GameWalkPuzzle(MAP,COSTS,heuristic_number)
 
       if use_animation:
-          used_viewer = AnimatedSearchViewer(MAP, delay_ms=300, problem=problem)
+          used_viewer = AnimatedSearchViewer(MAP, delay_ms=300, problem=problem, caption=algorithm.__name__)
       else:
           used_viewer = WebViewer()
       # Probad también ConsoleViewer para depurar
@@ -206,10 +206,10 @@ COSTS = {
     "down": 1.0,
 }
 
-#algorithms=(breadth_first,depth_first)
-algorithms=(breadth_first,)
+algorithms=(breadth_first,depth_first)
+#algorithms=(astar,)
 
-MAP_ASCII = generate_random_map(width=12, height=12, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
+MAP_ASCII = generate_random_map(width=10, height=10, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
 
 main (MAP_ASCII,COSTS,algorithms)
 

@@ -59,7 +59,7 @@ SPRITES = {
 class AnimatedSearchViewer(BaseViewer):
     """Pygame viewer that shows the robot moving through the map during search"""
 
-    def __init__(self, map_grid, delay_ms=200, problem=None):
+    def __init__(self, map_grid, delay_ms=200, problem=None, caption="Search Viewer"):
         super().__init__()
         self.map_grid = map_grid
         self.delay_ms = delay_ms
@@ -76,6 +76,7 @@ class AnimatedSearchViewer(BaseViewer):
         self.solution_cost = 0.0
         self.current_cost = 0.0
         self.solution_actions = []  # List of actions in the solution path
+        self.caption = caption
 
         # Find initial and goal positions
         for y in range(len(self.map_grid)):
@@ -87,12 +88,15 @@ class AnimatedSearchViewer(BaseViewer):
         time.sleep(2)
         # Initialize pygame
         pygame.init()
-        width = len(self.map_grid[0]) * TILE_SIZE
+        map_width = len(self.map_grid[0]) * TILE_SIZE
+        # Ensure minimum width for info panel (at least 600px to show more stats)
+        width = max(map_width, 600)
         # Add extra space for info panel (expanded for more stats)
-        height = len(self.map_grid) * TILE_SIZE + 180
+        height = len(self.map_grid) * TILE_SIZE + 210
         self.screen = pygame.display.set_mode((width, height))
+        self.map_width_pixels = map_width
         self.map_height = len(self.map_grid) * TILE_SIZE
-        pygame.display.set_caption("BFS Search Visualization")
+        pygame.display.set_caption(self.caption)
 
         # Load font for text display
         self.font = pygame.font.Font(None, 24)
@@ -110,7 +114,7 @@ class AnimatedSearchViewer(BaseViewer):
     def draw_info_panel(self):
         """Draw information panel below the map"""
         # Draw background for info panel
-        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 180)
+        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 210)
         pygame.draw.rect(self.screen, (40, 40, 40), info_rect)
 
         # Calculate solution length first (needed for display logic)
@@ -168,8 +172,19 @@ class AnimatedSearchViewer(BaseViewer):
                 if len(path_str) > 50:
                     path_str = path_str[:47] + "..."
 
-                path_text = self.font.render(f"Camino: {path_str}", True, (100, 255, 150))
+                path_text = self.font.render(f"Acciones: {path_str}", True, (100, 255, 150))
                 self.screen.blit(path_text, (10, y_offset + 100))
+
+            # Display coordinate path (show more positions with wider window)
+            if self.path and len(self.path) > 0:
+                # Show first 10 positions to make use of wider window
+                num_positions = min(10, len(self.path))
+                coord_str = " > ".join([f"{pos}" for pos in self.path[:num_positions]])
+                if len(self.path) > num_positions:
+                    coord_str += " > ..."
+
+                coord_text = self.font.render(f"Ruta: {coord_str}", True, (100, 255, 150))
+                self.screen.blit(coord_text, (10, y_offset + 125))
 
         # Goal position (moved down)
         if self.goal_pos:
@@ -183,9 +198,12 @@ class AnimatedSearchViewer(BaseViewer):
 
     def draw_map(self):
         """Draw the current state of the map"""
+        # Calculate offset to center the map if window is wider
+        x_offset = (self.screen.get_width() - self.map_width_pixels) // 2
+
         for y, row in enumerate(self.map_grid):
             for x, cell in enumerate(row):
-                rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                rect = pygame.Rect(x * TILE_SIZE + x_offset, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
 
                 # Determine cell color
                 if (x, y) in self.path and (x, y) != self.initial_pos and (x, y) != self.goal_pos:
