@@ -89,8 +89,8 @@ class AnimatedSearchViewer(BaseViewer):
         # Initialize pygame
         pygame.init()
         map_width = len(self.map_grid[0]) * TILE_SIZE
-        # Ensure minimum width for info panel (at least 600px to show more stats)
-        width = max(map_width, 600)
+        # Ensure minimum width for info panel (at least 900px to show more stats)
+        width = max(map_width, 900)
         # Add extra space for info panel (expanded for more stats)
         height = len(self.map_grid) * TILE_SIZE + 210
         self.screen = pygame.display.set_mode((width, height))
@@ -101,6 +101,7 @@ class AnimatedSearchViewer(BaseViewer):
         # Load font for text display
         self.font = pygame.font.Font(None, 24)
         self.font_large = pygame.font.Font(None, 32)
+        self.font_small = pygame.font.Font(None, 20)
 
         # Load sprites
         self.sprites = {}
@@ -164,26 +165,39 @@ class AnimatedSearchViewer(BaseViewer):
             length_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
             self.screen.blit(length_text, (10, y_offset + 75))
 
-            # Display solution path (actions)
+            # Display solution path (actions) - use smaller font to fit more
             if self.solution_actions:
-                # Create a compact representation
-                path_str = " > ".join(self.solution_actions)
-                # Truncate if too long (max ~50 characters)
-                if len(path_str) > 50:
-                    path_str = path_str[:47] + "..."
+                # Calculate how many actions can fit based on window width
+                available_width = self.screen.get_width() - 100  # Leave some margin
+                # Each action is ~6 chars, estimate ~100 chars fit in 900px window
+                max_chars = available_width // 6
 
-                path_text = self.font.render(f"Acciones: {path_str}", True, (100, 255, 150))
+                path_str = " > ".join(self.solution_actions)
+                if len(path_str) > max_chars:
+                    # Find where to cut off
+                    cutoff = max_chars - 4
+                    path_str = path_str[:cutoff] + "..."
+
+                path_text = self.font_small.render(f"Acciones: {path_str}", True, (100, 255, 150))
                 self.screen.blit(path_text, (10, y_offset + 100))
 
-            # Display coordinate path (show more positions with wider window)
+            # Display coordinate path (dynamically scale based on map size)
             if self.path and len(self.path) > 0:
-                # Show first 10 positions to make use of wider window
-                num_positions = min(10, len(self.path))
-                coord_str = " > ".join([f"{pos}" for pos in self.path[:num_positions]])
-                if len(self.path) > num_positions:
-                    coord_str += " > ..."
+                # Calculate how many positions can fit based on window width
+                available_width = self.screen.get_width() - 100
+                # Each coordinate like "(4, 4) > " is ~10 chars
+                max_chars = available_width // 5
 
-                coord_text = self.font.render(f"Ruta: {coord_str}", True, (100, 255, 150))
+                # Show all positions if they fit, otherwise truncate
+                coord_str = " > ".join([f"{pos}" for pos in self.path])
+                if len(coord_str) > max_chars:
+                    # Calculate how many positions fit
+                    avg_chars_per_pos = 10  # "(x, y) > "
+                    num_positions = (max_chars - 4) // avg_chars_per_pos
+                    num_positions = max(6, num_positions)
+                    coord_str = " > ".join([f"{pos}" for pos in self.path[:num_positions]]) + " > ..."
+
+                coord_text = self.font_small.render(f"Ruta: {coord_str}", True, (100, 255, 150))
                 self.screen.blit(coord_text, (10, y_offset + 125))
 
         # Goal position (moved down)
