@@ -93,7 +93,8 @@ class AnimatedSearchViewer(BaseViewer):
         width = max(map_width, 600)
         # Add extra space for info panel (increased for multi-line path)
         height = len(self.map_grid) * TILE_SIZE + 260
-        self.screen = pygame.display.set_mode((width, height))
+        # Make window resizable so user can maximize it
+        self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
         self.map_width_pixels = map_width
         self.map_height = len(self.map_grid) * TILE_SIZE
         pygame.display.set_caption(self.caption)
@@ -280,6 +281,12 @@ class AnimatedSearchViewer(BaseViewer):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.VIDEORESIZE:
+                # Handle window resize (including maximize)
+                self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                self.draw_map()
+                pygame.display.flip()
+                return
 
         self.draw_map()
         pygame.display.flip()
@@ -354,6 +361,11 @@ class AnimatedSearchViewer(BaseViewer):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     waiting = False
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     waiting = False
+                elif event.type == pygame.VIDEORESIZE:
+                    # Handle window resize in close mode too
+                    self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                    self.draw_map()
+                    pygame.display.flip()
         pygame.quit()

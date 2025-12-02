@@ -37,7 +37,7 @@ from utils.animated_viewer import AnimatedSearchViewer
 from utils.random_map import generate_random_map
 
 # SETTINGS
-RANDOM_MAP=False
+RANDOM_MAP=True
 
 class GameWalkPuzzle(SearchProblem):
 
@@ -162,6 +162,7 @@ def main(MAP_ASCII,COSTS,algorithms,heuristic_number=1,use_animation=True):
           used_viewer = AnimatedSearchViewer(MAP, delay_ms=300, problem=problem, caption=algorithm.__name__)
       else:
           used_viewer = WebViewer()
+          #used_viewer = BaseViewer()
       # Probad también ConsoleViewer para depurar
       # No podréis usar WebViewer en Collab para ver los árboles
 
@@ -194,12 +195,12 @@ DEFAULT_MAP_ASCII = """
 #       #
 #########
 """
-MAP_ASCII = generate_random_map(width=10, height=10, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
+MAP_ASCII = generate_random_map(width=8, height=8, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
 
 
 # Configuración y llamada para el caso 1
 # Se ejecutan los algoritmos de búsqueda en amplitud y búsqueda en profundidad
-
+'''
 COSTS = {
     "left": 1.0,
     "right": 1.0,
@@ -230,7 +231,7 @@ main (MAP_ASCII,COSTS,algorithms)
 # Configuración y llamada para el caso 3
 # Se utiliza el mismo mapa y se usan diferentes heurísticas
 
-
+'''
 COSTS = {
     "left": 3.0,
     "right": 1.0,
