@@ -299,6 +299,7 @@ class AnimatedSearchViewer(BaseViewer):
             print(f"Solution path calculated: Length={len(path)}, Cost={self.solution_cost:.2f}")
             print(f"Actions list: {self.solution_actions}")
             print(f"Actions joined: {' → '.join(self.solution_actions)}")
+            print(f"Solutions path: {path}")
         else:
             print(f"Warning: Cannot calculate cost - problem={self.problem}, result={result}")
 

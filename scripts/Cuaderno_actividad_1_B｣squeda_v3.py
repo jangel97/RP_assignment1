@@ -37,7 +37,7 @@ from utils.animated_viewer import AnimatedSearchViewer
 from utils.random_map import generate_random_map
 
 # SETTINGS
-RANDOM_MAP=True
+RANDOM_MAP=False
 
 class GameWalkPuzzle(SearchProblem):
 
@@ -206,7 +206,8 @@ COSTS = {
     "down": 1.0,
 }
 
-algorithms=(breadth_first,depth_first)
+algorithms=(breadth_first,)
+#algorithms=(depth_first,)
 #algorithms=(astar,)
 
 MAP_ASCII = generate_random_map(width=10, height=10, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
