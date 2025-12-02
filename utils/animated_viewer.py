@@ -89,10 +89,10 @@ class AnimatedSearchViewer(BaseViewer):
         # Initialize pygame
         pygame.init()
         map_width = len(self.map_grid[0]) * TILE_SIZE
-        # Ensure minimum width for info panel (at least 900px to show more stats)
-        width = max(map_width, 900)
-        # Add extra space for info panel (expanded for more stats)
-        height = len(self.map_grid) * TILE_SIZE + 210
+        # Ensure minimum width for info panel (600px for readability)
+        width = max(map_width, 600)
+        # Add extra space for info panel (increased for multi-line path)
+        height = len(self.map_grid) * TILE_SIZE + 260
         self.screen = pygame.display.set_mode((width, height))
         self.map_width_pixels = map_width
         self.map_height = len(self.map_grid) * TILE_SIZE
@@ -102,6 +102,7 @@ class AnimatedSearchViewer(BaseViewer):
         self.font = pygame.font.Font(None, 24)
         self.font_large = pygame.font.Font(None, 32)
         self.font_small = pygame.font.Font(None, 20)
+        self.font_medium = pygame.font.Font(None, 22)
 
         # Load sprites
         self.sprites = {}
@@ -115,7 +116,7 @@ class AnimatedSearchViewer(BaseViewer):
     def draw_info_panel(self):
         """Draw information panel below the map"""
         # Draw background for info panel
-        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 210)
+        info_rect = pygame.Rect(0, self.map_height, self.screen.get_width(), 260)
         pygame.draw.rect(self.screen, (40, 40, 40), info_rect)
 
         # Calculate solution length first (needed for display logic)
@@ -139,6 +140,15 @@ class AnimatedSearchViewer(BaseViewer):
             # Current exploration cost (orange)
             cost_text = self.font.render(f"Coste Actual: {self.current_cost:.2f}", True, (255, 200, 100))
             self.screen.blit(cost_text, (250, self.map_height + 40))
+
+        # Goal and Initial positions (right side, below timer and cost)
+        if self.initial_pos:
+            init_text = self.font.render(f"Inicial: {self.initial_pos}", True, (200, 200, 200))
+            self.screen.blit(init_text, (250, self.map_height + 65))
+
+        if self.goal_pos:
+            goal_text = self.font.render(f"Objetivo: {self.goal_pos}", True, (200, 200, 200))
+            self.screen.blit(goal_text, (250, self.map_height + 90))
 
         # Use built-in stats from BaseViewer
         iterations = self.stats.get('iterations', 0)
@@ -165,7 +175,7 @@ class AnimatedSearchViewer(BaseViewer):
             length_text = self.font.render(f"Longitud solución: {solution_length}", True, (100, 255, 150))
             self.screen.blit(length_text, (10, y_offset + 75))
 
-            # Display solution path (actions) - use smaller font to fit more
+            # Display solution path (actions) - use medium font for readability
             if self.solution_actions:
                 # Calculate how many actions can fit based on window width
                 available_width = self.screen.get_width() - 100  # Leave some margin
@@ -174,41 +184,52 @@ class AnimatedSearchViewer(BaseViewer):
 
                 path_str = " > ".join(self.solution_actions)
                 if len(path_str) > max_chars:
-                    # Find where to cut off
+                    # Find where to cut off and add continuation indicator
                     cutoff = max_chars - 4
-                    path_str = path_str[:cutoff] + "..."
+                    path_str = path_str[:cutoff] + " > ..."
 
-                path_text = self.font_small.render(f"Acciones: {path_str}", True, (100, 255, 150))
+                path_text = self.font_medium.render(f"Acciones: {path_str}", True, (100, 255, 150))
                 self.screen.blit(path_text, (10, y_offset + 100))
 
-            # Display coordinate path (dynamically scale based on map size)
+            # Display coordinate path (multi-line support)
             if self.path and len(self.path) > 0:
-                # Calculate how many positions can fit based on window width
-                available_width = self.screen.get_width() - 100
-                # Each coordinate like "(4, 4) > " is ~10 chars
-                max_chars = available_width // 5
+                # Calculate how many positions fit per line
+                available_width = self.screen.get_width() - 80
+                # Estimate: each position "(x, y) > " is ~65 pixels in medium font
+                positions_per_line = max(5, available_width // 65)
 
-                # Show all positions if they fit, otherwise truncate
-                coord_str = " > ".join([f"{pos}" for pos in self.path])
-                if len(coord_str) > max_chars:
-                    # Calculate how many positions fit
-                    avg_chars_per_pos = 10  # "(x, y) > "
-                    num_positions = (max_chars - 4) // avg_chars_per_pos
-                    num_positions = max(6, num_positions)
-                    coord_str = " > ".join([f"{pos}" for pos in self.path[:num_positions]]) + " > ..."
+                # Split path into chunks that fit on one line
+                lines = []
+                for i in range(0, len(self.path), positions_per_line):
+                    chunk = self.path[i:i + positions_per_line]
+                    line_str = " > ".join([f"{pos}" for pos in chunk])
 
-                coord_text = self.font_small.render(f"Ruta: {coord_str}", True, (100, 255, 150))
+                    # Add continuation indicator if not the last chunk
+                    if i + positions_per_line < len(self.path):
+                        line_str += " >"
+
+                    lines.append(line_str)
+
+                # Only show first 3 lines to avoid overcrowding
+                truncated = False
+                if len(lines) > 3:
+                    lines = lines[:3]
+                    truncated = True
+
+                # Render first line with label
+                first_line = lines[0]
+                if len(lines) == 1 and truncated:
+                    first_line += " ..."
+                coord_text = self.font_medium.render(f"Ruta: {first_line}", True, (100, 255, 150))
                 self.screen.blit(coord_text, (10, y_offset + 125))
 
-        # Goal position (moved down)
-        if self.goal_pos:
-            goal_text = self.font.render(f"Objetivo: {self.goal_pos}", True, (200, 200, 200))
-            self.screen.blit(goal_text, (250, y_offset + 50))
-
-        # Initial position
-        if self.initial_pos:
-            init_text = self.font.render(f"Inicial: {self.initial_pos}", True, (200, 200, 200))
-            self.screen.blit(init_text, (250, y_offset + 75))
+                # Render additional lines (indented)
+                for idx, line in enumerate(lines[1:], start=1):
+                    # Add ellipsis if this is the last line and there's more
+                    if idx == len(lines) - 1 and truncated:
+                        line += " ..."
+                    coord_text = self.font_medium.render(f"      {line}", True, (100, 255, 150))
+                    self.screen.blit(coord_text, (10, y_offset + 125 + idx * 22))
 
     def draw_map(self):
         """Draw the current state of the map"""

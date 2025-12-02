@@ -194,6 +194,7 @@ DEFAULT_MAP_ASCII = """
 #       #
 #########
 """
+MAP_ASCII = generate_random_map(width=10, height=10, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
 
 
 # Configuración y llamada para el caso 1
@@ -207,10 +208,9 @@ COSTS = {
 }
 
 #algorithms=(breadth_first,)
-algorithms=(depth_first,)
+algorithms=(breadth_first,depth_first,)
 #algorithms=(astar,)
 
-MAP_ASCII = generate_random_map(width=10, height=10, wall_prob=0.25) if RANDOM_MAP is True else DEFAULT_MAP_ASCII
 
 main (MAP_ASCII,COSTS,algorithms)
 
@@ -242,5 +242,4 @@ algorithms=(astar,)
 main (MAP_ASCII,COSTS,algorithms,1)
 main (MAP_ASCII,COSTS,algorithms,2)
 main (MAP_ASCII,COSTS,algorithms,3)
-
 '''
