@@ -17,7 +17,7 @@ from utils.animated_viewer import AnimatedSearchViewer
 from common import GameWalkPuzzle, resultado_experimento, get_map, run_case
 
 # SETTINGS
-RANDOM_MAP = True
+RANDOM_MAP = False
 
 
 # -----------------------------------------------------------------------------------
@@ -100,4 +100,4 @@ def main(MAP_ASCII, COSTS, algorithms, heuristic_number=1, use_animation=False):
 
 if __name__ == "__main__":
     MAP_ASCII = get_map(use_random=RANDOM_MAP)
-    run_case(2, MAP_ASCII, main)
+    run_case(3, MAP_ASCII, main)

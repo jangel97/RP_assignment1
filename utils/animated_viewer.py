@@ -41,7 +41,7 @@ import sys
 import time
 from simpleai.search.viewers import BaseViewer
 
-TILE_SIZE = 50
+DEFAULT_TILE_SIZE = 50
 
 COLORS = {
     "#": (50, 50, 50),           # Wall
@@ -88,15 +88,35 @@ class AnimatedSearchViewer(BaseViewer):
         time.sleep(2)
         # Initialize pygame
         pygame.init()
-        map_width = len(self.map_grid[0]) * TILE_SIZE
+
+        # Get screen info to determine max usable size
+        display_info = pygame.display.Info()
+        max_screen_width = display_info.current_w - 100  # Leave some margin
+        max_screen_height = display_info.current_h - 150  # Leave margin for taskbar/menubar
+
+        # Calculate tile size that fits the screen
+        map_cols = len(self.map_grid[0])
+        map_rows = len(self.map_grid)
+        info_panel_height = 260
+
+        # Calculate maximum tile size that fits
+        max_tile_width = max_screen_width // map_cols
+        max_tile_height = (max_screen_height - info_panel_height) // map_rows
+
+        # Use the smaller of the two, but cap at DEFAULT_TILE_SIZE
+        self.tile_size = min(DEFAULT_TILE_SIZE, max_tile_width, max_tile_height)
+        # Ensure minimum tile size for visibility
+        self.tile_size = max(self.tile_size, 15)
+
+        map_width = map_cols * self.tile_size
         # Ensure minimum width for info panel (600px for readability)
         width = max(map_width, 600)
         # Add extra space for info panel (increased for multi-line path)
-        height = len(self.map_grid) * TILE_SIZE + 260
+        height = map_rows * self.tile_size + info_panel_height
         # Make window resizable so user can maximize it
         self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
         self.map_width_pixels = map_width
-        self.map_height = len(self.map_grid) * TILE_SIZE
+        self.map_height = map_rows * self.tile_size
         pygame.display.set_caption(self.caption)
 
         # Load font for text display
@@ -110,7 +130,8 @@ class AnimatedSearchViewer(BaseViewer):
         try:
             for key, path in SPRITES.items():
                 img = pygame.image.load(path)
-                self.sprites[key] = pygame.transform.scale(img, (TILE_SIZE-8, TILE_SIZE-8))
+                sprite_size = max(self.tile_size - 8, 10)  # Ensure minimum sprite size
+                self.sprites[key] = pygame.transform.scale(img, (sprite_size, sprite_size))
         except:
             print("Warning: Could not load sprites")
 
@@ -243,7 +264,7 @@ class AnimatedSearchViewer(BaseViewer):
 
         for y, row in enumerate(self.map_grid):
             for x, cell in enumerate(row):
-                rect = pygame.Rect(x * TILE_SIZE + x_offset, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                rect = pygame.Rect(x * self.tile_size + x_offset, y * self.tile_size, self.tile_size, self.tile_size)
 
                 # Determine cell color
                 if (x, y) in self.path and (x, y) != self.initial_pos and (x, y) != self.goal_pos:
@@ -270,7 +291,7 @@ class AnimatedSearchViewer(BaseViewer):
                         self.screen.blit(self.sprites["T"], self.sprites["T"].get_rect(center=rect.center))
                     else:
                         # Fallback: draw a circle
-                        pygame.draw.circle(self.screen, (0, 100, 255), rect.center, TILE_SIZE // 3)
+                        pygame.draw.circle(self.screen, (0, 100, 255), rect.center, self.tile_size // 3)
 
         # Draw info panel
         self.draw_info_panel()
